@@ -82,3 +82,28 @@ class Age:
 """
 이름과 나이를 각각 Name, Age가 담당하도록 바뀌었다. 유효성 검증 및 상태값을 스스로 관리할 수 있게 되었다.
 """
+
+"""
+로또 예시
+"""
+from __future__ import annotations # 선행참조(forward referencing). 이 방법 외에는 'ClassName'식으로 문자열 사용
+
+class LottoNumber:
+    _MIN_LOTTO_NUMBER:int = 1
+    _MAX_LOTTO_NUMBER:int = 45
+    _OUT_OF_RANGE:str = "로또번호는 1~45의 범위입니다."
+    _NUMBERS:dict[int, LottoNumber] = {}
+
+    def __init__(self, number: int):
+        for i in range(self._MIN_LOTTO_NUMBER, self._MAX_LOTTO_NUMBER + 1):
+            self._NUMBERS.update(i, LottoNumber(i))
+
+        self.lotto_number = number
+
+    def of(self, number: int):
+        lotto_number:LottoNumber = self._NUMBERS.get(number)
+        if lotto_number is None:
+            raise ValueError(self._OUT_OF_RANGE)
+        return lotto_number
+
+
