@@ -1,3 +1,6 @@
+from __future__ import annotations # 선행참조(forward referencing). 이 방법 외에는 'ClassName'식으로 문자열 사용
+from typing import TypeVar
+
 """
 변수를 선언하는 2가지 방법
 """
@@ -86,24 +89,79 @@ class Age:
 """
 로또 예시
 """
-from __future__ import annotations # 선행참조(forward referencing). 이 방법 외에는 'ClassName'식으로 문자열 사용
+
+BONUS_CANNOT_BE_DUPLICATE_WITH_WINNING_NUMBER = "BONUS_CANNOT_BE_DUPLICATE_WITH_WINNING_NUMBER"
+
+T = TypeVar('T', bound='LottoNumber')
 
 class LottoNumber:
-    _MIN_LOTTO_NUMBER:int = 1
-    _MAX_LOTTO_NUMBER:int = 45
-    _OUT_OF_RANGE:str = "로또번호는 1~45의 범위입니다."
-    _NUMBERS:dict[int, LottoNumber] = {}
+    # 클래스 변수
+    __MIN_LOTTO_NUMBER: int = 1
+    __MAX_LOTTO_NUMBER:int = 45
+    __OUT_OF_RANGE:str = "로또번호는 1~45의 범위입니다."
+    __NUMBERS:dict[int, LottoNumber] = {}
 
     def __init__(self, number: int):
-        for i in range(self._MIN_LOTTO_NUMBER, self._MAX_LOTTO_NUMBER + 1):
-            self._NUMBERS.update(i, LottoNumber(i))
-
         self.lotto_number = number
 
-    def of(self, number: int):
-        lotto_number:LottoNumber = self._NUMBERS.get(number)
+    @classmethod
+    def _init_numbers(cls):
+        cls.__NUMBERS = {i: LottoNumber(i) for i in range(cls.__MIN_LOTTO_NUMBER, cls.__MAX_LOTTO_NUMBER + 1)}
+
+    @classmethod
+    def of(cls, number: int) -> LottoNumber:
+        if not cls.__NUMBERS:
+            cls._init_numbers()
+
+        lotto_number = cls.__NUMBERS.get(number)
         if lotto_number is None:
-            raise ValueError(self._OUT_OF_RANGE)
+            raise ValueError(cls.__OUT_OF_RANGE)
         return lotto_number
 
+# static block 대응. 파이썬에선 그거 없음.
+LottoNumber._init_numbers()
 
+class Lotto:
+    __lotto_numbers: list[LottoNumber]
+
+    def __init__(self, lotto_numbers:list[LottoNumber]) -> None:
+        self.validate_duplication(lotto_numbers)
+        self.validate_amount_of_numbers(lotto_numbers)
+        self.__lotto_numbers = lotto_numbers
+
+    def validate_duplication(self):
+        pass
+
+    def validate_amount_of_numbers(self):
+        pass
+
+class WinnigLottoNumbers:
+    def __init__(self) -> None:
+        pass
+
+class WinningLotto:
+    _winning_lotto_numbers: Lotto
+    _bonus_number: LottoNumber
+
+    def __init__(self, winning_lotto_numbers:WinnigLottoNumbers, bonus_number:LottoNumber) -> None:
+        self._winning_lotto_numbers = winning_lotto_numbers
+        if self.is_bonus_number_duplicated_with_winning_number(winning_lotto_numbers, bonus_number):
+            raise ValueError(BONUS_CANNOT_BE_DUPLICATE_WITH_WINNING_NUMBER)
+
+        if self._bonus_number < 1 or self._bonus_number > 45:
+            raise ValueError()
+        self._bonus_number = bonus_number
+
+    def is_bonus_number_duplicated_with_winning_number(self, winning_lotto_numbers:WinnigLottoNumbers, bonus_number:int):
+        pass
+
+    
+
+"""
+Lotto 클래스에서는 int 값인 로또 숫자 하나하나를 LottoNumber로 포장해 사용한다.
+LottoNumber 대신 int를 쓸 수 있지만 개별 로또 숫자에 관한 관리가 Lotto에서 이루어져 수행하는 일이 많아진다.
+
+만약 로또 숫자의 범위를 1-10으로 변경하거나 또다른 조건을 변경시킨다면? 로또 숫자가 원시값이면 같은 조건의 로또 숫자가 사용되는 WinningLotto 클래스와 Lotto 클래스를 전부 수정해야 한다.
+
+원시값인 개별 로또 숫자를 LottoNumber로 포장하면 확장과 변경에 유연해진다. 로또 숫자를 포장한 LottoNumber만 수정하면 된다.
+"""
